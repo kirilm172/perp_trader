@@ -9,7 +9,7 @@ class BaseModule:
     def get_tasks(self):
         raise NotImplementedError('get_tasks method must be implemented')
 
-    def log_staring_message(self, name):
+    def log_starting_message(self, name):
         console.log(f'[blue]Starting {name} work...[/blue]')
 
     def log_finished_message(self, name):
@@ -23,7 +23,7 @@ class BaseModule:
         console.log(f'[blue]{name} work cancelled.[/blue]')
 
     async def work(self):
-        self.log_staring_message(self.name)
+        self.log_starting_message(self.name)
         try:
             async with asyncio.TaskGroup() as group:
                 for task in self.get_tasks():
