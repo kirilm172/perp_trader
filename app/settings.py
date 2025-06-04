@@ -55,3 +55,6 @@ class BotConfig:
     # UI settings
     ui_refresh_interval_seconds: float = 1.0
     live_auto_refresh_seconds: int = 2
+
+    # Interval for adjusting data age thresholds (seconds)
+    update_thresholds_interval_seconds: int = 300

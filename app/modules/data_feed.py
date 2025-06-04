@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+import statistics
 from dataclasses import dataclass
 from itertools import product
 from typing import Sequence
@@ -47,10 +48,15 @@ class DataFeed(BaseModule):
         self.feed_queue = feed_queue
         self.collect_queue = asyncio.Queue()
         self.config = config
+        self._last_timestamps: dict[str, dict[str, float]] = defaultdict(dict)
+        self._update_stats: dict[str, dict[str, float]] = defaultdict(
+            lambda: {"sum": 0.0, "count": 0}
+        )
 
     def get_tasks(self):
         return [
             self.collect_feed(),
+            self.update_thresholds_task(),
             *(
                 self.watch_orderbook(exchange, market)
                 for exchange, market in product(self.exchanges, self.markets)
@@ -92,6 +98,15 @@ class DataFeed(BaseModule):
                     timestamp = orderbook['timestamp']
                     if not orderbook['bids'] or not orderbook['asks']:
                         continue
+                    # update interval statistics
+                    last_ts = self._last_timestamps[exchange_id].get(market)
+                    if last_ts is not None and timestamp is not None:
+                        interval = timestamp - last_ts
+                        if interval > 0:
+                            stats = self._update_stats[market]
+                            stats['sum'] += interval
+                            stats['count'] += 1
+                    self._last_timestamps[exchange_id][market] = timestamp
                     bid = get_price(orderbook['bids'])
                     ask = get_price(orderbook['asks'])
                     if (
@@ -172,3 +187,33 @@ class DataFeed(BaseModule):
                     f'[red]❌ Error watching {exchange.id} {market}: {e}. Retrying in {self.config.data_feed_retry_seconds}s...[/red]'
                 )
                 await asyncio.sleep(self.config.data_feed_retry_seconds)
+
+    def adjust_data_age_thresholds(self):
+        """Adjust *max_data_age_ms settings based on market update intervals."""
+        intervals = []
+        for stats in self._update_stats.values():
+            if stats['count']:
+                intervals.append(stats['sum'] / stats['count'])
+        if not intervals:
+            return
+        avg_interval = statistics.median(intervals)
+        new_threshold = int(avg_interval * 2)
+        self.config.analyze_arbitrage_max_data_age_ms = new_threshold
+        self.config.open_position_max_data_age_ms = new_threshold
+        self.config.close_position_max_data_age_ms = new_threshold
+        console.log(
+            f'[magenta]📈 Data age thresholds adjusted to {new_threshold}ms[/magenta]'
+        )
+
+    async def update_thresholds_task(self):
+        while True:
+            try:
+                await asyncio.sleep(self.config.update_thresholds_interval_seconds)
+                self.adjust_data_age_thresholds()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                console.log(
+                    f'[red]Error adjusting data age thresholds: {e}[/red]'
+                )
+
