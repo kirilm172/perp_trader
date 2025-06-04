@@ -27,6 +27,7 @@ class Strategy(BaseModule):
 
         self.positions: dict[str, ArbitragePosition] = {}
         self.exchange_balances: dict[str, float] = {}
+        self.funding_rates: dict[str, dict[str, float]] = {}
 
         # Cache for performance optimization
         self._commission_cache: dict[tuple[str, str, str], float] = {}
@@ -55,6 +56,7 @@ class Strategy(BaseModule):
             self.process_feed(),
             self.periodic_status_report(),
             self.fetch_balance_data(),
+            self.fetch_funding_rates(),
         ]
 
     def analyze_arbitrage(
@@ -175,12 +177,23 @@ class Strategy(BaseModule):
 
     def have_to_open_position(self, spread_data: SpreadData) -> bool:
         current_timestamp = time.time() * 1000  # convert to milliseconds
+        funding_adj = 0.0
+        if self.config.consider_funding:
+            buy_rate = self.funding_rates.get(spread_data.buy_exchange_id, {}).get(
+                spread_data.market, 0
+            )
+            sell_rate = self.funding_rates.get(spread_data.sell_exchange_id, {}).get(
+                spread_data.market, 0
+            )
+            funding_adj = (buy_rate - sell_rate) * 100
+
+        effective_net_spread = spread_data.net_spread - funding_adj
         net_spread_ok = (
-            spread_data.net_spread
+            effective_net_spread
             >= self.config.open_position_net_spread_threshold
         )
         nes_spread_ok_half = (
-            spread_data.net_spread
+            effective_net_spread
             >= self.config.open_position_net_spread_threshold / 2
         )
         age = current_timestamp - spread_data.min_timestamp
@@ -195,6 +208,8 @@ class Strategy(BaseModule):
             console.log(
                 f'[dim cyan]🔍 Checking opportunity {spread_data.market}:[/dim cyan]\n'
                 f'   Net spread: [cyan]{spread_data.net_spread:.3f}%[/cyan] (threshold: {self.config.open_position_net_spread_threshold}%)\n'
+                f'   Funding diff: [cyan]{funding_adj:.3f}%[/cyan]\n'
+                f'   Effective spread: [cyan]{effective_net_spread:.3f}%[/cyan]\n'
                 f'   Data age: [cyan]{age:.0f}ms[/cyan] (max: {self.config.open_position_max_data_age_ms}ms)\n'
                 f'   Sell price: [cyan]{spread_data.sell_price:.7f}[/cyan]\n'
                 f'   Buy price: [cyan]{spread_data.buy_price:.7f}[/cyan]\n'
@@ -212,8 +227,19 @@ class Strategy(BaseModule):
             position.opened_at + self.config.close_position_after_seconds
         )
         time_based_close = close_after < current_time
+        funding_adj = 0.0
+        if self.config.consider_funding:
+            buy_rate = self.funding_rates.get(spread_data.buy_exchange_id, {}).get(
+                spread_data.market, 0
+            )
+            sell_rate = self.funding_rates.get(spread_data.sell_exchange_id, {}).get(
+                spread_data.market, 0
+            )
+            funding_adj = (buy_rate - sell_rate) * 100
+
+        effective_raw_spread = spread_data.raw_spread - funding_adj
         spread_based_close = (
-            spread_data.raw_spread
+            effective_raw_spread
             <= self.config.close_position_raw_spread_threshold
         )
         age = current_timestamp - spread_data.min_timestamp
@@ -224,6 +250,8 @@ class Strategy(BaseModule):
         console.log(
             f'[dim yellow]🔍 Checking position {position.market}:[/dim yellow]\n'
             f'   Raw spread: [cyan]{spread_data.raw_spread:.3f}%[/cyan] (threshold: {self.config.close_position_raw_spread_threshold}%)\n'
+            f'   Funding diff: [cyan]{funding_adj:.3f}%[/cyan]\n'
+            f'   Effective spread: [cyan]{effective_raw_spread:.3f}%[/cyan]\n'
             f'   Time remaining: [cyan]{(close_after - current_time):.1f}s[/cyan]\n'
             f'   Data age: [cyan]{age:.0f}ms[/cyan] (max: {self.config.close_position_max_data_age_ms}ms)\n'
             f'   Should close: [{"green" if should_close else "red"}]{should_close}[/{"green" if should_close else "red"}]'
@@ -354,6 +382,56 @@ class Strategy(BaseModule):
             except Exception as e:
                 console.log(f'[red]Error fetching balances: {e}[/red]')
         console.log('[blue]Balance fetching finished.[/blue]')
+
+    async def _fetch_exchange_funding_rates(self, exchange: Exchange):
+        if hasattr(exchange, 'fetch_funding_rates'):
+            try:
+                rates = await exchange.fetch_funding_rates()
+            except Exception:
+                rates = {}
+        elif hasattr(exchange, 'fetch_funding_rate'):
+            rates = {}
+            for market in exchange.markets:
+                try:
+                    rate = await exchange.fetch_funding_rate(market)
+                    if rate is not None:
+                        rates[market] = rate
+                except Exception:
+                    continue
+        else:
+            rates = {}
+        return {
+            market: data.get('fundingRate', 0)
+            for market, data in rates.items()
+        }
+
+    async def fetch_funding_rates(self):
+        console.log('[blue]Starting funding rate fetching task...[/blue]')
+        while True:
+            try:
+                funding_data = await asyncio.gather(
+                    *(
+                        self._fetch_exchange_funding_rates(exchange)
+                        for exchange in self.exchange_by_id.values()
+                    )
+                )
+                self.funding_rates = {
+                    exchange.id: rates
+                    for exchange, rates in zip(
+                        self.exchange_by_id.values(), funding_data
+                    )
+                }
+                console.log(
+                    '[green]✅ Funding rates updated successfully.[/green]'
+                )
+                await asyncio.sleep(
+                    self.config.funding_rate_fetch_interval_seconds
+                )
+            except asyncio.CancelledError:  # noqa: PERF203
+                break
+            except Exception as e:
+                console.log(f'[red]Error fetching funding rates: {e}[/red]')
+        console.log('[blue]Funding rate fetching finished.[/blue]')
 
     async def periodic_status_report(self):
         """Periodically log the status of the bot"""

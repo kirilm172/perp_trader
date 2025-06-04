@@ -36,6 +36,10 @@ class BotConfig:
     balance_fetch_interval_seconds: int = 60
     status_report_interval_seconds: int = 60
 
+    # Funding settings
+    consider_funding: bool = False
+    funding_rate_fetch_interval_seconds: int = 300
+
     # Data age thresholds (milliseconds)
     analyze_arbitrage_max_data_age_ms: int = 400
     open_position_max_data_age_ms: int = 200

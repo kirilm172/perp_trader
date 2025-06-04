@@ -91,6 +91,25 @@ def strategy(mock_exchanges, strategy_config):
 
 
 @pytest.fixture
+def strategy_with_funding(mock_exchanges, strategy_config):
+    """Strategy instance with funding consideration enabled."""
+    strategy_config.consider_funding = True
+    feed_queue = asyncio.Queue()
+    render_queue = asyncio.Queue()
+    strat = Strategy(
+        feed_queue=feed_queue,
+        render_queue=render_queue,
+        exchange_by_id=mock_exchanges,
+        config=strategy_config,
+    )
+    strat.funding_rates = {
+        'binance': {'BTC/USDT:USDT': 0.001},
+        'bybit': {'BTC/USDT:USDT': 0.0},
+    }
+    return strat
+
+
+@pytest.fixture
 def sample_exchange_data():
     """Sample exchange data for testing arbitrage analysis."""
     return {

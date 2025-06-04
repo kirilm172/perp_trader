@@ -491,3 +491,44 @@ class TestStrategy:
         # Just verify the method exists and is callable
         assert hasattr(strategy, 'work')
         assert callable(strategy.work)
+
+    @patch('asyncio.get_running_loop')
+    def test_funding_adjustment_open(self, mock_loop, strategy_with_funding):
+        """Net spread should be reduced by funding diff when enabled."""
+        mock_loop.return_value.time.return_value = 1640995200.0
+        spread_data = SpreadData(
+            market='BTC/USDT:USDT',
+            buy_exchange_id='binance',
+            buy_price=50000.0,
+            sell_exchange_id='bybit',
+            sell_price=50050.0,
+            raw_spread=0.3,
+            commission=0.05,
+            net_spread=0.25,
+            min_timestamp=300.0,
+        )
+        # funding diff is 0.1%, net becomes 0.15 < threshold
+        assert strategy_with_funding.have_to_open_position(spread_data) is False
+
+    @patch('asyncio.get_running_loop')
+    def test_funding_adjustment_close(self, mock_loop, strategy_with_funding):
+        """Raw spread should include funding diff when checking close."""
+        mock_loop.return_value.time.return_value = 1000.0
+        position = MagicMock()
+        position.opened_at = 500.0
+        position.market = 'BTC/USDT:USDT'
+        spread_data = SpreadData(
+            market='BTC/USDT:USDT',
+            buy_exchange_id='binance',
+            buy_price=50000.0,
+            sell_exchange_id='bybit',
+            sell_price=50050.0,
+            raw_spread=0.05,
+            commission=0.02,
+            net_spread=0.03,
+            min_timestamp=300.0,
+        )
+        # funding diff is 0.1%, effective spread -0.05 -> should close
+        with patch("time.time", return_value=0.35):
+            assert strategy_with_funding.have_to_close_position(position, spread_data)
+
