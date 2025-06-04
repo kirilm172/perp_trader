@@ -33,6 +33,7 @@ class BotConfig:
 
     # Timing and retry settings
     data_feed_retry_seconds: int = 30
+    ws_latency_threshold: float = 5.0
     balance_fetch_interval_seconds: int = 60
     status_report_interval_seconds: int = 60
 

@@ -2,7 +2,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import product
-from typing import Sequence
+from typing import Sequence, Dict, Tuple
 
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.base.errors import NetworkError
@@ -46,6 +46,7 @@ class DataFeed(BaseModule):
         self.markets = markets
         self.feed_queue = feed_queue
         self.collect_queue = asyncio.Queue()
+        self.ws_last_received: dict[tuple[str, str], float] = {}
         self.config = config
 
     def get_tasks(self):
@@ -135,6 +136,10 @@ class DataFeed(BaseModule):
         # Optimize order book depth based on exchange
         depths = self.config.orderbook_depths
 
+        key = (exchange.id, market)
+        loop = asyncio.get_running_loop()
+        self.ws_last_received[key] = loop.time()
+
         while True:
             try:
                 orderbook = await exchange.watch_order_book(
@@ -146,6 +151,16 @@ class DataFeed(BaseModule):
 
                 # Skip if orderbook is empty or invalid
                 if not orderbook.get('bids') or not orderbook.get('asks'):
+                    continue
+
+                now = loop.time()
+                delay = now - self.ws_last_received.get(key, now)
+                self.ws_last_received[key] = now
+                if delay > self.config.ws_latency_threshold:
+                    console.log(
+                        f'[yellow]⚠️  WS latency {delay:.2f}s for {exchange.id} {market} exceeds {self.config.ws_latency_threshold}s. Restarting...[/yellow]'
+                    )
+                    await exchange.close()
                     continue
 
                 await self.collect_queue.put(
