@@ -1,8 +1,16 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+import time
 
 import pytest
 from main import SpreadData, Strategy
+from settings import BotConfig, PositionConfig
+
+
+@pytest.fixture(autouse=True)
+def fixed_time(monkeypatch):
+    """Set a fixed current time for deterministic tests."""
+    monkeypatch.setattr(time, "time", lambda: 1640995200.0)
 
 
 @pytest.fixture
@@ -55,15 +63,17 @@ def mock_exchanges(mock_exchange):
 
 @pytest.fixture
 def strategy_config():
-    """Basic strategy configuration."""
-    return {
-        'open_position_net_spread_threshold': 0.1,
-        'close_position_raw_spread_threshold': 0.02,
-        'close_position_after_seconds': 300,
-        'position_usd_amount': 100.0,
-        'position_leverage': 1,
-        'base_currency': 'USDT',
-    }
+    """Create a BotConfig instance for the Strategy."""
+    return BotConfig(
+        open_position_net_spread_threshold=0.1,
+        close_position_raw_spread_threshold=0.02,
+        close_position_after_seconds=300,
+        position=PositionConfig(
+            usd_amount=100.0,
+            leverage=1,
+        ),
+        base_currency="USDT",
+    )
 
 
 @pytest.fixture
@@ -76,7 +86,7 @@ def strategy(mock_exchanges, strategy_config):
         feed_queue=feed_queue,
         render_queue=render_queue,
         exchange_by_id=mock_exchanges,
-        **strategy_config,
+        config=strategy_config,
     )
 
 

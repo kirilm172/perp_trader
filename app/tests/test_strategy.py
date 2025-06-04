@@ -12,12 +12,12 @@ class TestStrategy:
     def test_initialization(self, strategy, mock_exchanges, strategy_config):
         """Test Strategy initialization."""
         assert strategy.exchange_by_id == mock_exchanges
-        assert strategy.open_position_net_spread_threshold == 0.1
-        assert strategy.close_position_raw_spread_threshold == 0.02
-        assert strategy.close_position_after_seconds == 300
-        assert strategy.position_usd_amount == 100.0
-        assert strategy.position_leverage == 1
-        assert strategy.base_currency == 'USDT'
+        assert strategy.config.open_position_net_spread_threshold == 0.1
+        assert strategy.config.close_position_raw_spread_threshold == 0.02
+        assert strategy.config.close_position_after_seconds == 300
+        assert strategy.config.position.usd_amount == 100.0
+        assert strategy.config.position.leverage == 1
+        assert strategy.config.base_currency == "USDT"
         assert strategy.positions == {}
 
     def test_analyze_arbitrage_basic(self, strategy, sample_exchange_data):
@@ -122,7 +122,8 @@ class TestStrategy:
             min_timestamp=300.0,  # Below threshold (350)
         )
 
-        assert strategy.have_to_open_position(spread_data) is True
+        with patch("time.time", return_value=0.35):
+            assert strategy.have_to_open_position(spread_data) is True
 
     @patch('asyncio.get_running_loop')
     def test_have_to_open_position_false_spread(self, mock_loop, strategy):
@@ -191,7 +192,8 @@ class TestStrategy:
             min_timestamp=300.0,
         )
 
-        assert strategy.have_to_close_position(position, spread_data) is True
+        with patch("time.time", return_value=0.35):
+            assert strategy.have_to_close_position(position, spread_data) is True
 
     @patch('asyncio.get_running_loop')
     def test_have_to_close_position_timeout(
@@ -218,7 +220,8 @@ class TestStrategy:
             min_timestamp=300.0,
         )
 
-        assert strategy.have_to_close_position(position, spread_data) is True
+        with patch("time.time", return_value=0.35):
+            assert strategy.have_to_close_position(position, spread_data) is True
 
     @patch('asyncio.get_running_loop')
     def test_have_to_close_position_false(
@@ -341,7 +344,7 @@ class TestStrategy:
 
         with (
             patch.object(strategy, 'have_to_open_position', return_value=True),
-            patch('main.ArbitragePosition') as mock_position_class,
+            patch('modules.strategy.ArbitragePosition') as mock_position_class,
         ):
             mock_position = AsyncMock()
             mock_position.market = 'BTC/USDT:USDT'
