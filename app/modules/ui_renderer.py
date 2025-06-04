@@ -99,9 +99,10 @@ class UIRenderer(BaseModule):
             reverse=True,
         ):
             age = current_timestamp - spread_data.min_timestamp
-            age_color = 'green' if age < 0.5 else 'red'
+            age_sec = age / 1000
+            age_color = 'green' if age_sec < 0.5 else 'red'
             row_style = (
-                'dim' if (spread_data.net_spread < 0 or age > 0.5) else None
+                'dim' if (spread_data.net_spread < 0 or age_sec > 0.5) else None
             )
             table.add_row(
                 spread_data.market,
@@ -112,7 +113,7 @@ class UIRenderer(BaseModule):
                 f'{spread_data.raw_spread:.2f}',
                 f'{spread_data.commission:.2f}',
                 f'{spread_data.net_spread:.2f}',
-                f'[{age_color}]{age:.3f}',
+                f'[{age_color}]{age_sec:.3f}',
                 style=row_style,
             )
         return table
