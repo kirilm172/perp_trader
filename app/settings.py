@@ -40,6 +40,8 @@ class BotConfig:
     balance_fetch_interval_seconds: int = 60
     status_report_interval_seconds: int = 60
 
+    max_slippage_pct: float = 1.0
+
     # Data age thresholds (milliseconds)
     analyze_arbitrage_max_data_age_ms: int = 400
     open_position_max_data_age_ms: int = 200

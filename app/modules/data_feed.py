@@ -65,6 +65,7 @@ class DataFeed(BaseModule):
         )
 
         def get_price(asks_or_bids):
+            best_price = asks_or_bids[0][0]
             amounts_sum = 0
             volumes_sum = 0
             for price, volume in asks_or_bids:
@@ -80,7 +81,9 @@ class DataFeed(BaseModule):
                     volumes_sum += volume
             else:
                 raise ValueError('Not enough orderbook depth!')
-            return amounts_sum / volumes_sum
+            avg_price = amounts_sum / volumes_sum
+            slippage_pct = abs(avg_price - best_price) / best_price * 100
+            return avg_price, slippage_pct
 
         while True:
             _orderbook = await self.collect_queue.get()
@@ -92,8 +95,17 @@ class DataFeed(BaseModule):
                     timestamp = orderbook['timestamp']
                     if not orderbook['bids'] or not orderbook['asks']:
                         continue
-                    bid = get_price(orderbook['bids'])
-                    ask = get_price(orderbook['asks'])
+                    bid, bid_slippage = get_price(orderbook['bids'])
+                    ask, ask_slippage = get_price(orderbook['asks'])
+                    if (
+                        bid_slippage > self.config.max_slippage_pct
+                        or ask_slippage > self.config.max_slippage_pct
+                    ):
+                        console.log(
+                            f'[yellow]⚠️  Slippage too high for {exchange_id} {market}: '
+                            f'bid {bid_slippage:.2f}%, ask {ask_slippage:.2f}%[/yellow]'
+                        )
+                        continue
                     if (
                         market not in feed[exchange_id]
                         or feed[exchange_id][market]['bid'] != bid
