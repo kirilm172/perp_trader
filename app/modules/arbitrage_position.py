@@ -19,6 +19,7 @@ class ArbitragePosition:
         market: str,
         usd_amount: float,
         leverage: int,
+        order_type: str = 'market',
     ):
         self.buy_exchange = buy_exchange
         self.buy_price = buy_price
@@ -27,6 +28,7 @@ class ArbitragePosition:
         self.market = market
         self.usd_amount = usd_amount
         self.leverage = leverage
+        self.order_type = order_type
 
     @property
     def key(self):
@@ -93,6 +95,24 @@ class ArbitragePosition:
             self.market, 'market', side, amount
         )
 
+    async def create_limit_order_by_usd(
+        self,
+        exchange: Exchange,
+        amount: float,
+        side: str,
+        price: float,
+        post_only: bool,
+    ):
+        params = {'postOnly': post_only} if post_only else {}
+        return await exchange.create_order_ws(
+            self.market,
+            'limit',
+            side,
+            amount,
+            price,
+            params=params,
+        )
+
     async def get_contracts_amount(self, exchange: Exchange):
         """Get the amount of contracts for the given exchange and market."""
         positions = await exchange.fetch_positions([self.market])
@@ -114,18 +134,36 @@ class ArbitragePosition:
         console.log(
             f'[yellow]Placing orders for {self.market}: buy_amount={amount}, sell_amount={amount}[/yellow]'
         )
-        buy_order, sell_order = await asyncio.gather(
-            self.create_market_order_by_usd(
-                self.buy_exchange,
-                amount,
-                'buy',
-            ),
-            self.create_market_order_by_usd(
-                self.sell_exchange,
-                amount,
-                'sell',
-            ),
-        )
+        if self.order_type == 'limit':
+            buy_order, sell_order = await asyncio.gather(
+                self.create_limit_order_by_usd(
+                    self.buy_exchange,
+                    amount,
+                    'buy',
+                    self.buy_price,
+                    True,
+                ),
+                self.create_limit_order_by_usd(
+                    self.sell_exchange,
+                    amount,
+                    'sell',
+                    self.sell_price,
+                    True,
+                ),
+            )
+        else:
+            buy_order, sell_order = await asyncio.gather(
+                self.create_market_order_by_usd(
+                    self.buy_exchange,
+                    amount,
+                    'buy',
+                ),
+                self.create_market_order_by_usd(
+                    self.sell_exchange,
+                    amount,
+                    'sell',
+                ),
+            )
         self.bought_amount, self.sold_amount = await asyncio.gather(
             self.get_contracts_amount(self.buy_exchange),
             self.get_contracts_amount(self.sell_exchange),

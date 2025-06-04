@@ -157,6 +157,7 @@ class Strategy(BaseModule):
                             market=position.market,
                             usd_amount=position.usd_amount,
                             leverage=position.leverage,
+                            order_type=self.config.order_type,
                         )
                         for position in self.positions.values()
                     ]
@@ -272,6 +273,7 @@ class Strategy(BaseModule):
                         market=spread_data.market,
                         usd_amount=self.config.position.usd_amount,
                         leverage=self.config.position.leverage,
+                        order_type=self.config.order_type,
                     )
                 )
 

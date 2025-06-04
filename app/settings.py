@@ -30,6 +30,7 @@ class BotConfig:
     use_ui: bool = True
     use_profiler: bool = False
     top_n_markets: int = 200  # Number of markets to trade
+    order_type: str = 'market'
 
     # Timing and retry settings
     data_feed_retry_seconds: int = 30
