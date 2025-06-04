@@ -1,0 +1,20 @@
+[project]
+name = "perp-trader"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ccxt",
+    "python-dotenv",
+    "rich",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstrument",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+]
