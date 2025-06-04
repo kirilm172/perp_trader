@@ -210,7 +210,7 @@ async def main():
         base_currency='USDT',
         use_ui=False,  # Set to True to enable UI
         # use_profiler=True, # Set to True to enable profiler
-        top_n_markets=150,
+        top_n_markets=300,
         analyze_arbitrage_max_data_age_ms=200,
     )
 
