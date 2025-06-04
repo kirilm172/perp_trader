@@ -1,5 +1,6 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+from ccxt.async_support.base.exchange import Exchange
 import time
 
 import pytest
@@ -16,7 +17,7 @@ def fixed_time(monkeypatch):
 @pytest.fixture
 def mock_exchange():
     """Create a mock exchange for testing."""
-    exchange = AsyncMock()
+    exchange = AsyncMock(spec=Exchange)
     exchange.id = 'binance'
     exchange.markets = {
         'BTC/USDT:USDT': {'taker': 0.001, 'limits': {'cost': {'min': 5}}},
@@ -26,13 +27,15 @@ def mock_exchange():
         side_effect=lambda market, amount: amount
     )
     exchange.fetch_balance = AsyncMock(return_value={'free': {'USDT': 1000.0}})
+    exchange.fetch_funding_rates = AsyncMock(return_value={})
+    exchange.fetch_funding_rate = AsyncMock(return_value=None)
     return exchange
 
 
 @pytest.fixture
 def mock_exchanges(mock_exchange):
     """Create multiple mock exchanges."""
-    exchange1 = AsyncMock()
+    exchange1 = AsyncMock(spec=Exchange)
     exchange1.id = 'binance'
     exchange1.markets = {
         'BTC/USDT:USDT': {'taker': 0.001},
@@ -41,11 +44,11 @@ def mock_exchanges(mock_exchange):
     exchange1.amount_to_precision = MagicMock(
         side_effect=lambda market, amount: amount
     )
-    exchange1.fetch_balance = AsyncMock(
-        return_value={'free': {'USDT': 1000.0}}
-    )
+    exchange1.fetch_balance = AsyncMock(return_value={'free': {'USDT': 1000.0}})
+    exchange1.fetch_funding_rates = AsyncMock(return_value={})
+    exchange1.fetch_funding_rate = AsyncMock(return_value=None)
 
-    exchange2 = AsyncMock()
+    exchange2 = AsyncMock(spec=Exchange)
     exchange2.id = 'bybit'
     exchange2.markets = {
         'BTC/USDT:USDT': {'taker': 0.0015},
@@ -54,9 +57,9 @@ def mock_exchanges(mock_exchange):
     exchange2.amount_to_precision = MagicMock(
         side_effect=lambda market, amount: amount
     )
-    exchange2.fetch_balance = AsyncMock(
-        return_value={'free': {'USDT': 1000.0}}
-    )
+    exchange2.fetch_balance = AsyncMock(return_value={'free': {'USDT': 1000.0}})
+    exchange2.fetch_funding_rates = AsyncMock(return_value={})
+    exchange2.fetch_funding_rate = AsyncMock(return_value=None)
 
     return {'binance': exchange1, 'bybit': exchange2}
 
