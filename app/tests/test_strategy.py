@@ -3,7 +3,9 @@ import contextlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import statistics
 from main import SpreadData
+from modules.strategy import Strategy
 
 
 class TestStrategy:
@@ -491,3 +493,48 @@ class TestStrategy:
         # Just verify the method exists and is callable
         assert hasattr(strategy, 'work')
         assert callable(strategy.work)
+
+    def test_update_thresholds_adaptive(self, strategy_config, mock_exchanges):
+        strategy_config.adaptive_thresholds = True
+        strategy_config.volatility_window = 5
+        strategy = Strategy(
+            feed_queue=asyncio.Queue(),
+            render_queue=asyncio.Queue(),
+            exchange_by_id=mock_exchanges,
+            config=strategy_config,
+        )
+
+        values = [0.1, 0.3, 0.37, 0.62]
+        strategy.raw_spread_history.extend(values)
+        strategy.update_thresholds()
+
+        vol = statistics.pstdev(values)
+        assert pytest.approx(strategy.config.open_position_net_spread_threshold) == (
+            strategy.base_open_threshold + vol
+        )
+        assert pytest.approx(strategy.config.close_position_raw_spread_threshold) == (
+            strategy.base_close_threshold + vol / 2
+        )
+
+    def test_update_thresholds_disabled(self, strategy_config, mock_exchanges):
+        strategy_config.adaptive_thresholds = False
+        strategy_config.volatility_window = 5
+        strategy = Strategy(
+            feed_queue=asyncio.Queue(),
+            render_queue=asyncio.Queue(),
+            exchange_by_id=mock_exchanges,
+            config=strategy_config,
+        )
+
+        strategy.config.open_position_net_spread_threshold = 0.5
+        strategy.config.close_position_raw_spread_threshold = 0.5
+        strategy.raw_spread_history.extend([0.1, 0.2, 0.3])
+        strategy.update_thresholds()
+
+        assert strategy.config.open_position_net_spread_threshold == strategy.base_open_threshold
+        assert (
+            strategy.config.close_position_raw_spread_threshold
+            == strategy.base_close_threshold
+        )
+
+

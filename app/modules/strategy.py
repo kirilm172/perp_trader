@@ -1,5 +1,7 @@
 import asyncio
 import time
+import statistics
+from collections import deque
 from itertools import product
 
 from ccxt.async_support.base.exchange import Exchange
@@ -31,6 +33,17 @@ class Strategy(BaseModule):
         # Cache for performance optimization
         self._commission_cache: dict[tuple[str, str, str], float] = {}
 
+        # Historical spread statistics for adaptive thresholds
+        self.raw_spread_history: deque[float] = deque(
+            maxlen=self.config.volatility_window
+        )
+        self.base_open_threshold = (
+            self.config.initial_open_position_net_spread_threshold
+        )
+        self.base_close_threshold = (
+            self.config.initial_close_position_raw_spread_threshold
+        )
+
     def get_cached_commission(
         self, buy_exchange_id: str, sell_exchange_id: str, market: str
     ) -> float:
@@ -56,6 +69,24 @@ class Strategy(BaseModule):
             self.periodic_status_report(),
             self.fetch_balance_data(),
         ]
+
+    def update_thresholds(self) -> None:
+        """Recalculate thresholds based on recent spread volatility."""
+        if not self.raw_spread_history:
+            return
+
+        if not self.config.adaptive_thresholds:
+            self.config.open_position_net_spread_threshold = self.base_open_threshold
+            self.config.close_position_raw_spread_threshold = self.base_close_threshold
+            return
+
+        volatility = statistics.pstdev(self.raw_spread_history)
+        self.config.open_position_net_spread_threshold = (
+            self.base_open_threshold + volatility
+        )
+        self.config.close_position_raw_spread_threshold = (
+            self.base_close_threshold + volatility / 2
+        )
 
     def analyze_arbitrage(
         self, exchange_data: dict[str, dict[str, float]]
@@ -90,6 +121,7 @@ class Strategy(BaseModule):
                 price_diff = sell_price - buy_price
                 mid_price = (sell_price + buy_price) / 2
                 raw_spread = price_diff / mid_price * 100
+                self.raw_spread_history.append(abs(raw_spread))
 
                 # Use cached commission for faster calculation
                 commission = self.get_cached_commission(
@@ -124,6 +156,7 @@ class Strategy(BaseModule):
                     continue
 
                 spreads.update(new_spreads)
+                self.update_thresholds()
 
                 # Process positions immediately for minimum latency
                 await self.process_positions(new_spreads)

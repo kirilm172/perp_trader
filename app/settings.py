@@ -21,6 +21,10 @@ class BotConfig:
     open_position_net_spread_threshold: float = 0.1
     close_position_raw_spread_threshold: float = 0.02
     close_position_after_seconds: int = 3 * 60 * 60  # 3 hours
+    adaptive_thresholds: bool = False
+    volatility_window: int = 100
+    initial_open_position_net_spread_threshold: float | None = None
+    initial_close_position_raw_spread_threshold: float | None = None
 
     position: PositionConfig = field(default_factory=PositionConfig)
 
@@ -55,3 +59,13 @@ class BotConfig:
     # UI settings
     ui_refresh_interval_seconds: float = 1.0
     live_auto_refresh_seconds: int = 2
+
+    def __post_init__(self):
+        if self.initial_open_position_net_spread_threshold is None:
+            self.initial_open_position_net_spread_threshold = (
+                self.open_position_net_spread_threshold
+            )
+        if self.initial_close_position_raw_spread_threshold is None:
+            self.initial_close_position_raw_spread_threshold = (
+                self.close_position_raw_spread_threshold
+            )
