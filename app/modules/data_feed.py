@@ -2,7 +2,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import product
-from typing import Sequence, Dict, Tuple
+from typing import Sequence
 
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.base.errors import NetworkError
