@@ -144,7 +144,7 @@ class Strategy(BaseModule):
                             raw_spread=spread.raw_spread,
                             commission=spread.commission,
                             net_spread=spread.net_spread,
-                            time_diff=spread.time_diff,
+                            min_timestamp=spread.min_timestamp,
                         )
                         for key, spread in spreads.items()
                     }
