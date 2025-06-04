@@ -11,15 +11,15 @@ from modules.base import BaseModule
 from modules.data_feed import DataFeed, SpreadData
 from modules.strategy import Strategy
 from modules.ui_renderer import UIRenderer
-
-__all__ = [
-    "ArbitrageBot",
-    "SpreadData",
-    "Strategy",
-]
 from rich.live import Live
 from rich.logging import RichHandler
 from settings import BotConfig, PositionConfig, console
+
+__all__ = [
+    'ArbitrageBot',
+    'SpreadData',
+    'Strategy',
+]
 
 
 class ArbitrageBot(BaseModule):
