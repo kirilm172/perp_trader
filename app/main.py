@@ -8,9 +8,15 @@ import pyinstrument
 from ccxt.async_support.base.exchange import Exchange, NotSupported
 from ccxt.pro import binance, bybit  # okx
 from modules.base import BaseModule
-from modules.data_feed import DataFeed
+from modules.data_feed import DataFeed, SpreadData
 from modules.strategy import Strategy
 from modules.ui_renderer import UIRenderer
+
+__all__ = [
+    "ArbitrageBot",
+    "SpreadData",
+    "Strategy",
+]
 from rich.live import Live
 from rich.logging import RichHandler
 from settings import BotConfig, PositionConfig, console
