@@ -1,6 +1,6 @@
 import asyncio
-import time
 import statistics
+import time
 from collections import deque
 from itertools import product
 
@@ -76,8 +76,12 @@ class Strategy(BaseModule):
             return
 
         if not self.config.adaptive_thresholds:
-            self.config.open_position_net_spread_threshold = self.base_open_threshold
-            self.config.close_position_raw_spread_threshold = self.base_close_threshold
+            self.config.open_position_net_spread_threshold = (
+                self.base_open_threshold
+            )
+            self.config.close_position_raw_spread_threshold = (
+                self.base_close_threshold
+            )
             return
 
         volatility = statistics.pstdev(self.raw_spread_history)
