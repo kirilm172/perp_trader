@@ -154,7 +154,6 @@ class ArbitrageBot(BaseModule):
                 return_exceptions=True,
             )
 
-        exchange.fetch_margin_modes
         await asyncio.gather(
             *(
                 configure_exchange(exchange)
