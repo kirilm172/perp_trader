@@ -102,7 +102,9 @@ class UIRenderer(BaseModule):
             age_sec = age / 1000
             age_color = 'green' if age_sec < 0.5 else 'red'
             row_style = (
-                'dim' if (spread_data.net_spread < 0 or age_sec > 0.5) else None
+                'dim'
+                if (spread_data.net_spread < 0 or age_sec > 0.5)
+                else None
             )
             table.add_row(
                 spread_data.market,
