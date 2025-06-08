@@ -111,9 +111,12 @@ class DataFeed(BaseModule):
                         or feed[exchange_id][market]['bid'] != bid
                         or feed[exchange_id][market]['ask'] != ask
                     ):
+                        old_market_data = feed[exchange_id].get(market, {})
+                        old_bid = old_market_data.get('bid', bid)
+                        old_ask = old_market_data.get('ask', ask)
                         feed[exchange_id][market] = {
-                            'bid': bid,
-                            'ask': ask,
+                            'bid': (bid + old_bid) / 2,  # Average price
+                            'ask': (ask + old_ask) / 2,  # Average price
                             'timestamp': timestamp,
                         }
                         changed_markets.add(market)
