@@ -1,16 +1,17 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
 import time
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from main import SpreadData, Strategy
+from modules.data_feed import SpreadData
+from modules.strategy import Strategy
 from settings import BotConfig, PositionConfig
 
 
 @pytest.fixture(autouse=True)
 def fixed_time(monkeypatch):
     """Set a fixed current time for deterministic tests."""
-    monkeypatch.setattr(time, "time", lambda: 1640995200.0)
+    monkeypatch.setattr(time, 'time', lambda: 1640995200.0)
 
 
 @pytest.fixture
@@ -72,7 +73,7 @@ def strategy_config():
             usd_amount=100.0,
             leverage=1,
         ),
-        base_currency="USDT",
+        base_currency='USDT',
     )
 
 

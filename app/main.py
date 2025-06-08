@@ -204,12 +204,12 @@ async def main():
 
     # Create BotConfig instance
     bot_config = BotConfig(
-        open_position_net_spread_threshold=0.5,
+        open_position_net_spread_threshold=0.4,
         close_position_raw_spread_threshold=-0.1,
         close_position_after_seconds=3 * 60 * 60,  # 3 hours
         position=PositionConfig(
-            usd_amount=8,
-            leverage=2,
+            usd_amount=15,
+            leverage=1,
             size_buffer_factor=1.05,
         ),
         base_currency='USDT',
