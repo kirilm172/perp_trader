@@ -1,0 +1,5 @@
+SSH_USER="root"
+SSH_HOST="147.93.84.219"
+SSH_PORT="22"
+CONTAINER_NAME="my-perp-bot"
+GIT_REPO="git@github.com:kirilm172/perp_trader.git"
