@@ -1,9 +1,9 @@
 import asyncio
 import contextlib
+import statistics
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import statistics
 from main import SpreadData
 from modules.strategy import Strategy
 
@@ -19,7 +19,7 @@ class TestStrategy:
         assert strategy.config.close_position_after_seconds == 300
         assert strategy.config.position.usd_amount == 100.0
         assert strategy.config.position.leverage == 1
-        assert strategy.config.base_currency == "USDT"
+        assert strategy.config.base_currency == 'USDT'
         assert strategy.positions == {}
 
     def test_analyze_arbitrage_basic(self, strategy, sample_exchange_data):
@@ -124,7 +124,7 @@ class TestStrategy:
             min_timestamp=300.0,  # Below threshold (350)
         )
 
-        with patch("time.time", return_value=0.35):
+        with patch('time.time', return_value=0.35):
             assert strategy.have_to_open_position(spread_data) is True
 
     @patch('asyncio.get_running_loop')
@@ -194,8 +194,10 @@ class TestStrategy:
             min_timestamp=300.0,
         )
 
-        with patch("time.time", return_value=0.35):
-            assert strategy.have_to_close_position(position, spread_data) is True
+        with patch('time.time', return_value=0.35):
+            assert (
+                strategy.have_to_close_position(position, spread_data) is True
+            )
 
     @patch('asyncio.get_running_loop')
     def test_have_to_close_position_timeout(
@@ -222,8 +224,10 @@ class TestStrategy:
             min_timestamp=300.0,
         )
 
-        with patch("time.time", return_value=0.35):
-            assert strategy.have_to_close_position(position, spread_data) is True
+        with patch('time.time', return_value=0.35):
+            assert (
+                strategy.have_to_close_position(position, spread_data) is True
+            )
 
     @patch('asyncio.get_running_loop')
     def test_have_to_close_position_false(
@@ -509,12 +513,12 @@ class TestStrategy:
         strategy.update_thresholds()
 
         vol = statistics.pstdev(values)
-        assert pytest.approx(strategy.config.open_position_net_spread_threshold) == (
-            strategy.base_open_threshold + vol
-        )
-        assert pytest.approx(strategy.config.close_position_raw_spread_threshold) == (
-            strategy.base_close_threshold + vol / 2
-        )
+        assert pytest.approx(
+            strategy.config.open_position_net_spread_threshold
+        ) == (strategy.base_open_threshold + vol)
+        assert pytest.approx(
+            strategy.config.close_position_raw_spread_threshold
+        ) == (strategy.base_close_threshold + vol / 2)
 
     def test_update_thresholds_disabled(self, strategy_config, mock_exchanges):
         strategy_config.adaptive_thresholds = False
@@ -531,10 +535,11 @@ class TestStrategy:
         strategy.raw_spread_history.extend([0.1, 0.2, 0.3])
         strategy.update_thresholds()
 
-        assert strategy.config.open_position_net_spread_threshold == strategy.base_open_threshold
+        assert (
+            strategy.config.open_position_net_spread_threshold
+            == strategy.base_open_threshold
+        )
         assert (
             strategy.config.close_position_raw_spread_threshold
             == strategy.base_close_threshold
         )
-
-

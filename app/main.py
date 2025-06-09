@@ -204,7 +204,7 @@ async def main():
 
     # Create BotConfig instance
     bot_config = BotConfig(
-        open_position_net_spread_threshold=0.4,
+        open_position_net_spread_threshold=0.5,
         close_position_raw_spread_threshold=-0.1,
         close_position_after_seconds=3 * 60 * 60,  # 3 hours
         position=PositionConfig(
@@ -213,7 +213,7 @@ async def main():
             size_buffer_factor=1.05,
         ),
         base_currency='USDT',
-        use_ui=False,  # Set to True to enable UI
+        # use_ui=True,  # Set to True to enable UI
         # use_profiler=True, # Set to True to enable profiler
         top_n_markets=200,
         analyze_arbitrage_max_data_age_ms=200,

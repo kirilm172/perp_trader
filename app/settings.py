@@ -31,7 +31,7 @@ class BotConfig:
     # General bot settings
     base_currency: str = 'USDT'
     debug: bool = False
-    use_ui: bool = True
+    use_ui: bool = False
     use_profiler: bool = False
     top_n_markets: int = 200  # Number of markets to trade
     order_type: str = 'market'
