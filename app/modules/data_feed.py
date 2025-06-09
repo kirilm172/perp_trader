@@ -80,7 +80,8 @@ class DataFeed(BaseModule):
                     amounts_sum += amount
                     volumes_sum += volume
             else:
-                raise ValueError('Not enough orderbook depth!')
+                console.log('[yellow]⚠️  Not enough orderbook depth![/yellow]')
+                return None
             avg_price = amounts_sum / volumes_sum
             slippage_pct = abs(avg_price - best_price) / best_price * 100
             return avg_price, slippage_pct
@@ -95,8 +96,12 @@ class DataFeed(BaseModule):
                     timestamp = orderbook['timestamp']
                     if not orderbook['bids'] or not orderbook['asks']:
                         continue
-                    bid, bid_slippage = get_price(orderbook['bids'])
-                    ask, ask_slippage = get_price(orderbook['asks'])
+                    bid_info = get_price(orderbook['bids'])
+                    ask_info = get_price(orderbook['asks'])
+                    if bid_info is None or ask_info is None:
+                        continue
+                    bid, bid_slippage = bid_info
+                    ask, ask_slippage = ask_info
                     if (
                         bid_slippage > self.config.max_slippage_pct
                         or ask_slippage > self.config.max_slippage_pct
