@@ -217,7 +217,7 @@ class Strategy(BaseModule):
             spread_data.net_spread
             >= self.config.open_position_net_spread_threshold
         )
-        nes_spread_ok_half = (
+        net_spread_ok_half = (
             spread_data.net_spread
             >= self.config.open_position_net_spread_threshold / 2
         )
@@ -226,7 +226,7 @@ class Strategy(BaseModule):
         age_ok_half = age < (self.config.open_position_max_data_age_ms * 2)
 
         should_open = net_spread_ok and age_ok
-        should_print = nes_spread_ok_half and age_ok_half
+        should_print = net_spread_ok_half and age_ok_half
 
         if should_print:
             should_open_color = 'green' if should_open else 'red'
