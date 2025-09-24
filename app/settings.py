@@ -13,6 +13,7 @@ class PositionConfig:
     usd_amount: float = 5.5
     leverage: int = 1
     size_buffer_factor: float = 1.05
+    trailing_stop_mode: bool = False  # Enable trailing stops for positions
 
 
 @dataclass

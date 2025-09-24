@@ -13,8 +13,4 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyinstrument",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "pytest-mock",
 ]

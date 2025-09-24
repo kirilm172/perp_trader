@@ -311,6 +311,7 @@ class Strategy(BaseModule):
                         usd_amount=self.config.position.usd_amount,
                         leverage=self.config.position.leverage,
                         order_type=self.config.order_type,
+                        trailing_stop_mode=self.config.position.trailing_stop_mode,
                     )
                 )
 

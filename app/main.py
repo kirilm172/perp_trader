@@ -208,9 +208,10 @@ async def main():
         close_position_raw_spread_threshold=-0.1,
         close_position_after_seconds=3 * 60 * 60,  # 3 hours
         position=PositionConfig(
-            usd_amount=15,
-            leverage=1,
+            usd_amount=10,
+            leverage=2,
             size_buffer_factor=1.05,
+            # trailing_stop_mode=True,
         ),
         base_currency='USDT',
         # use_ui=True,  # Set to True to enable UI
@@ -272,6 +273,9 @@ async def main():
         f'   • Position size: [cyan]${bot_config.position.usd_amount}[/cyan]'
     )
     console.log(f'   • Leverage: [cyan]{bot_config.position.leverage}x[/cyan]')
+    console.log(
+        f'   • Trailing Stops: [cyan]{bot_config.position.trailing_stop_mode}[/cyan]'
+    )
     console.log(f'   • Base Currency: [cyan]{bot_config.base_currency}[/cyan]')
     console.log(f'   • Use UI: [cyan]{bot_config.use_ui}[/cyan]')
     console.log(f'   • Top N Markets: [cyan]{bot_config.top_n_markets}[/cyan]')
