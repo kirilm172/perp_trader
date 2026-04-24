@@ -4,7 +4,7 @@ source "$(dirname "$0")/common.sh"
 
 if [ -f .env ]; then
     echo "Uploading .env file to server..."
-    scp -P "$SSH_PORT" .env "$SSH_USER@$SSH_HOST:~/tradeGPT/.env"
+    scp -P "$SSH_PORT" .env "$SSH_USER@$SSH_HOST:~/perp_trader/.env"
 fi
 
-ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" "cd ~/tradeGPT && ./scripts/update_container.sh"
+ssh -p "$SSH_PORT" "$SSH_USER"@"$SSH_HOST" "cd ~/perp_trader && ./scripts/update_container.sh"

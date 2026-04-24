@@ -5,6 +5,7 @@ from collections import deque
 from itertools import product
 
 from ccxt.async_support.base.exchange import Exchange
+
 from settings import BotConfig, console
 
 from .arbitrage_position import ArbitragePosition

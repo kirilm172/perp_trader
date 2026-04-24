@@ -2,6 +2,7 @@ import asyncio
 
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.base.errors import InvalidOrder
+
 from settings import console
 
 

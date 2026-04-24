@@ -6,6 +6,7 @@ from typing import Sequence
 
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.base.errors import NetworkError
+
 from settings import BotConfig, console
 
 from .base import BaseModule

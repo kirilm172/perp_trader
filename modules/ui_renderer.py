@@ -6,6 +6,7 @@ from rich import box
 from rich.layout import Layout
 from rich.live import Live
 from rich.table import Table
+
 from settings import BotConfig, console
 
 from .arbitrage_position import ArbitragePosition
@@ -58,9 +59,11 @@ class UIRenderer(BaseModule):
         cur_time = asyncio.get_running_loop().time()
         for position in sorted(
             positions,
-            key=lambda x: spreads[key].raw_spread
-            if (key := get_position_key(x)) in spreads
-            else 0,
+            key=lambda x: (
+                spreads[key].raw_spread
+                if (key := get_position_key(x)) in spreads
+                else 0
+            ),
             reverse=True,
         ):
             spread = spreads.get(get_position_key(position))
